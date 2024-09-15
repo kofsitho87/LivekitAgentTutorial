@@ -1,0 +1,24 @@
+# LiveKit 관련
+livekit
+livekit-agents
+livekit-plugins-deepgram
+livekit-plugins-openai
+livekit-plugins-silero
+
+# AI 및 자연어 처리
+openai
+
+# 데이터베이스
+supabase
+
+# 환경 변수 관리
+python-dotenv
+
+# 비동기 프로그래밍
+asyncio
+
+# 유틸리티
+pydantic
+
+# AI 에이전트 프레임워크
+crewai
