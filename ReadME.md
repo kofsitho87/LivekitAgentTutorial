@@ -21,7 +21,13 @@
 2. 프로젝트 이름을 입력하고 생성합니다.
 3. 프로젝트 대시보드에서 "Settings" 탭으로 이동합니다.
 4. "API Keys" 섹션에서 새 API 키를 생성합니다.
+![키발급](./imgs/img1.png)
+![키발급2](./imgs/img1.png)
 5. 생성된 `LIVEKIT_API_KEY`와 `LIVEKIT_API_SECRET`을 안전한 곳에 저장합니다.
+- .env 파일에 필요한 환경 변수를 설정합니다:
+- LIVEKIT_URL: [WebSocket URL]
+- LIVEKIT_API_KEY: [API Key]
+- LIVEKIT_API_SECRET: [API Secret]
 6. 대시보드 상단에서 프로젝트 URL을 확인하고 기록해둡니다.
 
 ## 3. 개발 환경 설정
