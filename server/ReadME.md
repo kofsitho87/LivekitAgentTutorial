@@ -1,5 +1,5 @@
 # 필요한 라이브러리 설치
-pip install -r requirements.txt
+uv sync
 
 # 라이브킷 서버 구동 가이드
 

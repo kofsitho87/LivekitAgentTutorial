@@ -1,0 +1,28 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#2F2F18",
+    "titleBar.activeBackground": "#414221",
+    "titleBar.activeForeground": "#FBFBF8"
+  },
+  "cSpell.diagnosticLevel": "Hint",
+  // CSS 설정
+  "css.lint.emptyRules": "ignore", // CSS 린트에서 빈 규칙을 무시합니다.
+  // Notebook 설정
+  "notebook.formatOnSave.enabled": true,
+  "notebook.codeActionsOnSave": {
+    "notebook.source.fixAll": "explicit",
+    "notebook.source.organizeImports": "explicit"
+  },
+  // 언어별 설정 (Python)
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "cSpell.words": [
+    "livekit"
+  ]
+}

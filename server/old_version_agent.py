@@ -1,22 +1,22 @@
 import asyncio
 import logging
+import os
+
+from dotenv import load_dotenv
 from livekit import rtc
 from livekit.agents import (
+    AutoSubscribe,
     JobContext,
+    JobProcess,
     WorkerOptions,
     cli,
-    tts,
-    tokenize,
     llm,
-    JobProcess,
-    AutoSubscribe
+    tokenize,
+    tts,
 )
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import deepgram, openai, silero
-from dotenv import load_dotenv
-
-import os
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # 환경 변수 로드
 load_dotenv()
@@ -28,9 +28,11 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
+
 # 프로세스 사전 준비 함수
 def prewarm_process(proc: JobProcess):
     proc.userdata["vad"] = silero.VAD.load()  # 음성 활동 감지기(VAD) 로드
+
 
 # 메인 엔트리포인트 함수
 async def entrypoint(ctx: JobContext):
@@ -59,7 +61,9 @@ async def entrypoint(ctx: JobContext):
     assistant = VoiceAssistant(
         vad=ctx.proc.userdata["vad"],  # Voice Activity Detection: 음성 활동 감지기
         stt=deepgram.STT(),  # Speech-to-Text: 음성을 텍스트로 변환하는 Deepgram STT 모델
-        llm=openai.LLM(model="gpt-4o"),  # Language Model: GPT-4를 사용하는 OpenAI 언어 모델
+        llm=openai.LLM(
+            model="gpt-4o"
+        ),  # Language Model: GPT-4를 사용하는 OpenAI 언어 모델
         tts=openai_tts,  # Text-to-Speech: 텍스트를 음성으로 변환하는 OpenAI TTS 모델
         chat_ctx=chat_context,  # Chat Context: 대화 컨텍스트를 저장하는 객체
         interrupt_min_words=2,  # 최소 인터럽트 단어 수: 사용자 발화를 인터럽트하기 위한 최소 단어 수
