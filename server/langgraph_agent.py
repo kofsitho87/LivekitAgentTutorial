@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
@@ -19,9 +20,9 @@ from livekit.agents import (
     tokenize,
     tts,
 )
-from livekit.plugins import noise_cancellation, openai, silero
+from livekit.plugins import noise_cancellation, openai, silero, deepgram
 
-# from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from livekit.plugins.turn_detector.multilingual import MultilingualModel
 from langgraph_livekit_agents import LangGraphAdapter
 
 # client = get_client(url=url)
@@ -61,20 +62,52 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     # graph = create_graph()
 
-    url = "http://localhost:2024"
-    assistant_id = "agent"
+    # wait for the first participant to arrive
+    participant = await ctx.wait_for_participant()
+
+    participant_name = participant.name
+    participant_name_split = participant_name.split("_")
+    client_id = participant_name_split[0]
+    client_name = participant_name_split[1]
+    client_phone = participant_name_split[2]
+    client_address = participant_name_split[3]
+    site_id = participant_name_split[4]
+
+
+    print("participant")
+    print(participant)
+    # print(participant.name)
+    # print(participant.attributes)
+    # print(participant.metadata)
+
+    print("########################")
+    print(ctx.job)
+
+    # metadata = json.loads(ctx.job.metadata)
+
+    # customize behavior based on the participant
+    # print(f"connected to room {ctx.room.name} with participant {ctx.participant}")
+    print(f"connected to room {ctx.room.name}")
+
+    # await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+
+    url = os.getenv("LANGGRAPH_AGENT_URL", "http://localhost:2024")
+    assistant_id = os.getenv("LANGGRAPH_AGENT_ID", "agent")
 
     remote_graph = RemoteGraph(
         assistant_id,
         url=url,
         config={
             "configurable": {
-                "client_id": 1,
-                "client_name": "oneday dental hospital",
-                "client_phone": "010-1234-5678",
+                "client_id": client_id,
+                "client_name": client_name,
+                "client_phone": client_phone,
+                "client_address": client_address,
+                "site_id": site_id,
                 #
                 "auth_id": "026cb224-1339-4b9d-b38b-8afce054e0ad",
                 "model": "openai/gpt-4.1-2025-04-14",
+                # "model": "openai/gpt-4o",
                 # "model": "anthropic/claude-sonnet-4-20250514",
                 "use_voice_prompt": True,
             }
@@ -87,6 +120,19 @@ async def entrypoint(ctx: JobContext):
         llm=LangGraphAdapter(remote_graph),
     )
 
+    stt = openai.STT(language="ko", detect_language=True)
+    # stt = deepgram.STT(model="nova-3", language="multi")
+    # stt = deepgram.STT(
+    #     model="general",
+    #     language="ko",
+    #     detect_language=False,
+    #     interim_results=True,
+    #     punctuate=True,
+    #     smart_format=True,
+    # )
+    
+    # stt = deepgram.STT()
+
     # OpenAI TTS 설정
     openai_tts = tts.StreamAdapter(
         tts=openai.TTS(voice="nova"),
@@ -97,17 +143,10 @@ async def entrypoint(ctx: JobContext):
         vad=ctx.proc.userdata["vad"],
         # any combination of STT, LLM, TTS, or realtime API can be used
         # stt=deepgram.STT(model="nova-3", language="multi"),
-        # stt=deepgram.STT(
-        #     model="general",
-        #     language="ko",
-        #     detect_language=True,
-        #     interim_results=True,
-        #     punctuate=True,
-        #     smart_format=True,
-        # ),
-        stt=openai.STT(detect_language=True),
-        tts=openai_tts,
+        
+        stt=stt,
         # tts=deepgram.TTS(),
+        tts=openai_tts,
         # use LiveKit's turn detection model
         # turn_detection=MultilingualModel(),
     )
@@ -126,4 +165,4 @@ async def entrypoint(ctx: JobContext):
 
 
 if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm))
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm, agent_name="agent"))
