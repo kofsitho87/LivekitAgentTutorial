@@ -1,40 +1,46 @@
 from __future__ import annotations
 
 import asyncio
-import logging
-from dotenv import load_dotenv
 import json
+import logging
 import os
-from typing import Any
+from typing import Any, Literal
 
-from livekit import rtc, api
+from dotenv import load_dotenv
+from livekit import api, rtc
 from livekit.agents import (
-    AgentSession,
     Agent,
+    AgentSession,
     JobContext,
-    function_tool,
-    RunContext,
-    get_job_context,
-    cli,
-    WorkerOptions,
     RoomInputOptions,
+    RunContext,
+    WorkerOptions,
+    cli,
+    function_tool,
+    get_job_context,
+    tokenize,
+    tts,
 )
 from livekit.plugins import (
-    deepgram,
-    openai,
-    cartesia,
-    silero,
     noise_cancellation,  # noqa: F401
+    openai,
+    silero,
 )
-from livekit.plugins.turn_detector.english import EnglishModel
-
 
 # load environment variables, this is optional, only used for local development
-load_dotenv()
+load_dotenv(override=True)
 logger = logging.getLogger("outbound-caller")
 logger.setLevel(logging.DEBUG)
 
 outbound_trunk_id = os.getenv("SIP_OUTBOUND_TRUNK_ID")
+default_language: Literal["KOREAN", "ENGLISH"] = os.getenv(
+    "DEFAULT_LANGUAGE", "ENGLISH"
+)
+
+START_MESSAGES_MAP = {
+    "KOREAN": "안녕하세요! 고객님 오늘 예약확인차 전화드렸습니다.",
+    "ENGLISH": "Hello! I called to confirm your appointment today.",
+}
 
 
 class OutboundCaller(Agent):
@@ -54,7 +60,7 @@ class OutboundCaller(Agent):
             When the user would like to be transferred to a human agent, first confirm with them. upon confirmation, use the transfer_call tool.
             The customer's name is {name}. His appointment is on {appointment_time}.
 
-            You MUST RESPOND IN KOREAN.
+            You MUST RESPOND IN {default_language}.
             """
         )
         # keep reference to the participant for transfers
@@ -92,13 +98,14 @@ class OutboundCaller(Agent):
 
         job_ctx = get_job_context()
         try:
-            await job_ctx.api.sip.transfer_sip_participant(
-                api.TransferSIPParticipantRequest(
-                    room_name=job_ctx.room.name,
-                    participant_identity=self.participant.identity,
-                    transfer_to=f"tel:{transfer_to}",
-                )
+            transfer_request = api.TransferSIPParticipantRequest(
+                room_name=job_ctx.room.name,
+                participant_identity=self.participant.identity,
+                # transfer_to=f"tel:{transfer_to}",
+                transfer_to=f"sip:{transfer_to}@wiseai.withnet.co.kr:5060",
+                play_dialtone=False,
             )
+            await job_ctx.api.sip.transfer_sip_participant(transfer_request)
 
             logger.info(f"transferred call to {transfer_to}")
         except Exception as e:
@@ -185,13 +192,17 @@ async def entrypoint(ctx: JobContext):
 
     # the following uses GPT-4o, Deepgram and Cartesia
     session = AgentSession(
-        turn_detection=EnglishModel(),
+        # turn_detection=EnglishModel(),
         vad=silero.VAD.load(),
         # stt=deepgram.STT(),
-        stt=openai.STT(language="ko", detect_language=True),
+        stt=openai.STT(language="ko", detect_language=False),
         # you can also use OpenAI's TTS with openai.TTS()
-        tts=openai.TTS(),
-        llm=openai.LLM(model="gpt-4o"),
+        # tts=openai.TTS(),
+        tts=tts.StreamAdapter(
+            tts=openai.TTS(voice="nova"),
+            sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
+        ),
+        llm=openai.LLM(model="gpt-4o-mini"),
         # you can also use a speech-to-speech model like OpenAI's Realtime API
         # llm=openai.realtime.RealtimeModel()
     )
@@ -218,7 +229,7 @@ async def entrypoint(ctx: JobContext):
                 sip_call_to=phone_number,
                 participant_identity=participant_identity,
                 # function blocks until user answers the call, or if the call fails
-                wait_until_answered=True,
+                wait_until_answered=False,
             )
         )
 
@@ -228,6 +239,9 @@ async def entrypoint(ctx: JobContext):
         logger.info(f"participant joined: {participant.identity}")
 
         agent.set_participant(participant)
+
+        # play the agent's instructions
+        await session.generate_reply(instructions=START_MESSAGES_MAP[default_language])
 
     except api.TwirpError as e:
         logger.error(

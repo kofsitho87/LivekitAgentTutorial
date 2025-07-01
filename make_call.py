@@ -5,16 +5,17 @@
 
 # make_call.py
 
+import argparse
 import asyncio
 import json
 import logging
 import os
-import argparse
+
 from dotenv import load_dotenv
 from livekit import api
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 logger = logging.getLogger("cli-call")
 logger.setLevel(logging.INFO)
@@ -26,11 +27,15 @@ outbound_trunk_id = os.getenv("SIP_OUTBOUND_TRUNK_ID")
 transfer_to = os.getenv("TRANSFER_TO")
 sip_number = os.getenv("SIP_NUMBER")
 
+
 # 전화 연결 함수
 async def make_call(phone_number: str):
     """Make a call to the given phone number using LiveKit SIP"""
 
+    print("################")
     print(outbound_trunk_id)
+    print(phone_number)
+    print("################")
 
     # room 이름 및 전화번호 메타데이터 구성
     room_name = f"{room_name_prefix}{phone_number}"
@@ -48,7 +53,9 @@ async def make_call(phone_number: str):
 
     dispatch = await lkapi.agent_dispatch.create_dispatch(
         api.CreateAgentDispatchRequest(
-            agent_name=agent_name, room=room_name, metadata=metadata,
+            agent_name=agent_name,
+            room=room_name,
+            metadata=metadata,
         )
     )
     logger.info(f"Created dispatch: {dispatch}")
@@ -63,8 +70,10 @@ async def make_call(phone_number: str):
             sip_number=sip_number,
             participant_identity="sip-test",
             participant_name="Test call participant",
-            play_dialtone=False,
-            wait_until_answered=True,
+            play_dialtone=True,
+            wait_until_answered=False,
+            # play_ringing=True,
+            # krisp_enabled=True,
         )
     )
     logger.info(f"Created SIP participant: {sip_participant}")
@@ -89,9 +98,9 @@ async def main():
 
     # 전화번호 유효성 검사
     phone_number = args.phone_number.strip()
-    if not phone_number.startswith("+"):
-        logger.error("Phone number must start with '+' (E.164 format).")
-        return
+    # if not phone_number.startswith("+"):
+    #     logger.error("Phone number must start with '+' (E.164 format).")
+    #     return
 
     # 전화 걸기 함수 호출
     await make_call(phone_number)
