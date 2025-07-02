@@ -30,6 +30,73 @@ uv sync
 
 추가 도움이 필요하면 라이브킷 공식 문서를 참조하거나 개발팀에 문의하세요.
 
+# Docker를 사용한 배포
+
+## 6. Docker 빌드 및 실행
+
+### Docker 이미지 빌드
+1. 터미널을 열고 프로젝트 디렉토리로 이동합니다.
+2. 다음 명령어를 실행하여 Docker 이미지를 빌드합니다:
+   ```bash
+   docker build -t livekit-langgraph-agent .
+   ```
+
+### Docker 컨테이너 실행
+1. 환경 변수를 포함하여 컨테이너를 실행합니다:
+   ```bash
+   docker run -d \
+     --name livekit-agent-container \
+     -e LIVEKIT_URL=your_livekit_url \
+     -e LIVEKIT_API_KEY=your_api_key \
+     -e LIVEKIT_API_SECRET=your_api_secret \
+     livekit-langgraph-agent
+   ```
+
+2. 또는 `.env` 파일을 사용하여 실행합니다:
+   ```bash
+   docker run --env-file .env livekit-langgraph-agent
+   docker run -d --env-file .env livekit-langgraph-agent
+   ```
+
+### Docker 컨테이너 관리
+- 컨테이너 상태 확인:
+  ```bash
+  docker ps
+  ```
+
+- 컨테이너 로그 확인:
+  ```bash
+  docker logs livekit-agent-container
+  ```
+
+- 컨테이너 중지:
+  ```bash
+  docker stop livekit-agent-container
+  ```
+
+- 컨테이너 제거:
+  ```bash
+  docker rm livekit-agent-container
+  ```
+
+### Docker Compose (선택사항)
+Docker Compose를 사용하여 더 쉽게 관리할 수 있습니다. `docker-compose.yml` 파일을 생성하세요:
+
+```yaml
+version: '3.8'
+services:
+  livekit-langgraph-agent:
+    build: .
+    container_name: livekit-agent-container
+    env_file:
+      - .env
+    restart: unless-stopped
+```
+
+Docker Compose 실행:
+```bash
+docker-compose up -d
+```
 
 ## Command
 

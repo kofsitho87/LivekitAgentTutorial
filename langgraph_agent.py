@@ -20,9 +20,8 @@ from livekit.agents import (
     tokenize,
     tts,
 )
-from livekit.plugins import noise_cancellation, openai, silero, deepgram
+from livekit.plugins import noise_cancellation, openai, silero
 
-from livekit.plugins.turn_detector.multilingual import MultilingualModel
 from langgraph_livekit_agents import LangGraphAdapter
 
 # client = get_client(url=url)
@@ -31,7 +30,7 @@ from langgraph_livekit_agents import LangGraphAdapter
 
 logger = logging.getLogger("basic-agent")
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 def prewarm(proc: JobProcess):
@@ -72,7 +71,6 @@ async def entrypoint(ctx: JobContext):
     client_phone = participant_name_split[2]
     client_address = participant_name_split[3]
     site_id = participant_name_split[4]
-
 
     print("participant")
     print(participant)
@@ -130,7 +128,7 @@ async def entrypoint(ctx: JobContext):
     #     punctuate=True,
     #     smart_format=True,
     # )
-    
+
     # stt = deepgram.STT()
 
     # OpenAI TTS 설정
@@ -143,7 +141,6 @@ async def entrypoint(ctx: JobContext):
         vad=ctx.proc.userdata["vad"],
         # any combination of STT, LLM, TTS, or realtime API can be used
         # stt=deepgram.STT(model="nova-3", language="multi"),
-        
         stt=stt,
         # tts=deepgram.TTS(),
         tts=openai_tts,
@@ -165,4 +162,4 @@ async def entrypoint(ctx: JobContext):
 
 
 if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm, agent_name="agent"))
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm))

@@ -1,0 +1,60 @@
+# Git 관련
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python 관련
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.env
+.env.*
+
+# UV 관련
+.uv-cache/
+
+# IDE 관련
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 관련
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 문서 및 기타
+README.md
+LICENSE
+docs/
+*.md
+
+# 테스트 및 개발 관련
+tests/
+test_*
+*_test.py
+
+# Docker 관련
+Dockerfile*
+docker-compose*.yml
+.dockerignore
